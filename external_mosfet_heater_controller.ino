@@ -20,21 +20,21 @@
 #define CH2_LED A1
 
 // RTDs
-#define RREF 430.0
-#define RNOMINAL 100.0
-#define CS1 A2
-#define CS2 A3
+#define RREF        430.0
+#define RNOMINAL    100.0
+#define CS1         A2
+#define CS2         A3
 // Adafruit_MAX31865_Modified max_1 = Adafruit_MAX31865_Modified(CS1);
 // Adafruit_MAX31865_Modified max_2 = Adafruit_MAX31865_Modified(CS2);
 Adafruit_MAX31865 max1(CS1);
 Adafruit_MAX31865 max2(CS2);
 
 // OLEDs
-#define I2C_ADDR_CH1 0x3C
-#define I2C_ADDR_CH2 0x3D
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
-#define OLED_RESET -1
+#define I2C_ADDR_CH1    0x3C
+#define I2C_ADDR_CH2    0x3D
+#define SCREEN_WIDTH    128
+#define SCREEN_HEIGHT   32
+#define OLED_RESET      -1
 Adafruit_SSD1306 disp1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 disp2(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
