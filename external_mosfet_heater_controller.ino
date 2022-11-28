@@ -54,6 +54,8 @@ float oldError1 = 0;
 float oldError2 = 0;
 
 // Constant PID Values
+#define INT_THRESHOLD 2     // Only allow integral contribution when error to setpoint is less than this value
+
 const float Kp1 = 4000; 
 const float Ki1 = 3;
 const float Kd1 = 1;
@@ -96,23 +98,22 @@ void setup(){
     temperature2 = max2.temperature(RNOMINAL, RREF);
 
     // Display Init
-    if(!disp_1.begin(SSD1306_SWITCHCAPVCC, I2C_ADDR_CH1)){
+    if(!disp1.begin(SSD1306_SWITCHCAPVCC, I2C_ADDR_CH1)){
         Serial.println("SSD1306 allocation failed");
         while(1); // do not proceed
     };
     
-    if(!disp_2.begin(SSD1306_SWITCHCAPVCC, I2C_ADDR_CH2)){
+    if(!disp2.begin(SSD1306_SWITCHCAPVCC, I2C_ADDR_CH2)){
         Serial.println("SSD1306 allocation failed");
         while(1); // do not proceed
     };
-
 
     // Attach encoder interrupts
     attachInterrupt(digitalPinToInterrupt(ENC_1A), updateEncoder1, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ENC_2A), updateEncoder2, CHANGE);
 
-    // Update timeOld
-    timeOld = millis();
+    // Update oldTime
+    oldTime = millis();
 }
 
 void loop(){
@@ -153,10 +154,17 @@ void loop(){
     float PID_p1 = Kp1 * error1;
     float PID_p2 = Kp2 * error2;
 
-    // Integral Contribution
+    // Integral Contribution (Only when close to set point)
     float PID_i1 = PID_i1 + (Ki1 * error1);
+    if(abs(error1) > INT_THRESHOLD){
+        float PID_i1 = 0;
+    }
+
     float PID_i2 = PID_i2 + (Ki2 * error2);
-    
+    if(abs(error2) > INT_THRESHOLD){
+        float PID_i2 = 0;
+    }
+
     // Derivative Contribution
     unsigned long dT = ((float)millis() - (float)oldTime) / 1000;
     float PID_d1 = Kd1 * ((error1 - oldError1) / dT);
@@ -172,17 +180,29 @@ void loop(){
     PID1 = constrain(PID1, 0, 255);
     PID2 = constrain(PID2, 0, 255);
 
-    // Write PWM Values
+    // Write PWM Values or Reset Values
     if(ch1Status){
         digitalWrite(CH1_PWM, PID1); 
     }else{
         digitalWrite(CH1_PWM, 0);
+        PID_p1 = 0;
+        PID_i1 = 0;
+        PID_d1 = 0;
+        PID1 = 0;
+        error1 = 0;
+        oldError1 = 0;
     }
 
     if(ch2Status){
         digitalWrite(CH2_PWM, PID2); 
     }else{
         digitalWrite(CH2_PWM, 0);
+        PID_p2 = 0;
+        PID_i2 = 0;
+        PID_d2 = 0;
+        PID2 = 0;
+        error2 = 0;
+        oldError2 = 0;
     }
 
     // Update oldTime
@@ -190,9 +210,14 @@ void loop(){
 
     // Update Displays
     disp1.setCursor(10,2);
-    disp1.print("T here");
+    disp1.print(temperature1);
     disp1.display();
 
+    disp2.setCursor(10,2);
+    disp2.print(temperature2);
+    disp2.display();
+
+    // Loop delay for debounce... delete soon
     delay(10);
 }
 
